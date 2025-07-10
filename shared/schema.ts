@@ -30,8 +30,6 @@ export const sessions = pgTable(
 export const userRoleEnum = pgEnum("user_role", ["admin", "manager", "user"]);
 export const projectStatusEnum = pgEnum("project_status", ["planning", "active", "completed", "cancelled"]);
 export const licenseTypeEnum = pgEnum("license_type", ["basic", "professional", "enterprise"]);
-export const permissionLevelEnum = pgEnum("permission_level", ["read", "write", "admin"]);
-export const projectRoleEnum = pgEnum("project_role", ["owner", "manager", "editor", "viewer"]);
 
 // User storage table (required for Replit Auth)
 export const users = pgTable("users", {
@@ -39,35 +37,17 @@ export const users = pgTable("users", {
   email: varchar("email").unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
-  displayName: varchar("display_name"),
-  position: varchar("position"),
-  phone: varchar("phone"),
-  location: varchar("location"),
-  timezone: varchar("timezone").default("Europe/Berlin"),
-  language: varchar("language").default("de"),
   profileImageUrl: varchar("profile_image_url"),
   role: userRoleEnum("role").default("user").notNull(),
   privacyConsent: boolean("privacy_consent").default(false),
   sftpHost: varchar("sftp_host"),
-  sftpPort: integer("sftp_port").default(21),
+  sftpPort: integer("sftp_port").default(22),
   sftpUsername: varchar("sftp_username"),
   sftpPassword: varchar("sftp_password"),
   sftpPath: varchar("sftp_path").default("/"),
   sftpAccessLevel: integer("sftp_access_level").default(0),
   emailNotificationsEnabled: boolean("email_notifications_enabled").default(true),
   floodProtectionCertified: boolean("flood_protection_certified").default(false),
-  password: varchar("password"), // For manually created users
-  // Testzeitraum und Lizenz-Management
-  trialStartDate: timestamp("trial_start_date").defaultNow(),
-  trialEndDate: timestamp("trial_end_date"),
-  trialReminderSent: boolean("trial_reminder_sent").default(false),
-  // Stripe Payment & License Management
-  stripeCustomerId: varchar("stripe_customer_id"),
-  licenseType: licenseTypeEnum("license_type").default("basic"),
-  licenseExpiresAt: timestamp("license_expires_at"),
-  paymentStatus: varchar("payment_status").default("trial"), // trial, unpaid, paid, expired
-  lastPaymentDate: timestamp("last_payment_date"),
-  stripeSubscriptionId: varchar("stripe_subscription_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -83,9 +63,6 @@ export const projects = pgTable("projects", {
   budget: decimal("budget", { precision: 12, scale: 2 }),
   customerId: integer("customer_id").references(() => customers.id),
   managerId: varchar("manager_id").references(() => users.id),
-  userId: varchar("user_id").references(() => users.id).notNull(), // SECURITY: Owner of the project
-  customerContactId: integer("customer_contact_id").references(() => customerContacts.id),
-  companyContactId: integer("company_contact_id").references(() => companyContacts.id),
   latitude: decimal("latitude", { precision: 10, scale: 8 }),
   longitude: decimal("longitude", { precision: 11, scale: 8 }),
   address: text("address"),
@@ -108,7 +85,6 @@ export const customers = pgTable("customers", {
   postalCode: varchar("postal_code", { length: 10 }),
   city: varchar("city", { length: 100 }),
   contactPersonId: integer("contact_person_id").references(() => persons.id),
-  userId: varchar("user_id").references(() => users.id).notNull(), // SECURITY: Owner of the customer
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -124,7 +100,6 @@ export const companies = pgTable("companies", {
   postalCode: varchar("postal_code", { length: 10 }),
   city: varchar("city", { length: 100 }),
   website: varchar("website", { length: 255 }),
-  userId: varchar("user_id").references(() => users.id).notNull(), // SECURITY: Owner of the company
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -138,7 +113,6 @@ export const persons = pgTable("persons", {
   phone: varchar("phone", { length: 50 }),
   position: varchar("position", { length: 100 }),
   companyId: integer("company_id").references(() => companies.id),
-  userId: varchar("user_id").references(() => users.id).notNull(), // SECURITY: Owner of the person
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -273,40 +247,6 @@ export const licensePlans = pgTable("license_plans", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Ansprechpartner für Kunden
-export const customerContacts = pgTable("customer_contacts", {
-  id: serial("id").primaryKey(),
-  customerId: integer("customer_id").references(() => customers.id).notNull(),
-  name: varchar("name", { length: 255 }).notNull(),
-  email: varchar("email", { length: 255 }),
-  phone: varchar("phone", { length: 50 }),
-  position: varchar("position", { length: 100 }),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-// Ansprechpartner für Firmen
-export const companyContacts = pgTable("company_contacts", {
-  id: serial("id").primaryKey(),
-  companyId: integer("company_id").references(() => companies.id).notNull(),
-  name: varchar("name", { length: 255 }).notNull(),
-  email: varchar("email", { length: 255 }),
-  phone: varchar("phone", { length: 50 }),
-  position: varchar("position", { length: 100 }),
-  department: varchar("department", { length: 100 }),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-// Project Roles table for project-specific permissions
-export const projectRoles = pgTable("project_roles", {
-  id: serial("id").primaryKey(),
-  projectId: integer("project_id").references(() => projects.id).notNull(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  role: projectRoleEnum("role").default("viewer").notNull(),
-  permissionLevel: permissionLevelEnum("permission_level").default("read").notNull(),
-  assignedAt: timestamp("assigned_at").defaultNow(),
-  assignedBy: varchar("assigned_by").references(() => users.id),
-});
-
 
 
 // Relations
@@ -318,7 +258,6 @@ export const usersRelations = relations(users, ({ many }) => ({
   supportTickets: many(supportTickets),
   loginLogs: many(loginLog),
   aiLogs: many(aiLog),
-  projectRoles: many(projectRoles),
 }));
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
@@ -330,19 +269,10 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
     fields: [projects.managerId],
     references: [users.id],
   }),
-  customerContact: one(customerContacts, {
-    fields: [projects.customerContactId],
-    references: [customerContacts.id],
-  }),
-  companyContact: one(companyContacts, {
-    fields: [projects.companyContactId],
-    references: [companyContacts.id],
-  }),
   attachments: many(attachments),
   locations: many(projectLocations),
   audioRecords: many(audioRecords),
   photos: many(photos),
-  projectRoles: many(projectRoles),
 }));
 
 export const customersRelations = relations(customers, ({ one, many }) => ({
@@ -351,12 +281,10 @@ export const customersRelations = relations(customers, ({ one, many }) => ({
     references: [persons.id],
   }),
   projects: many(projects),
-  contacts: many(customerContacts),
 }));
 
 export const companiesRelations = relations(companies, ({ many }) => ({
   persons: many(persons),
-  contacts: many(companyContacts),
 }));
 
 export const personsRelations = relations(persons, ({ one, many }) => ({
@@ -365,35 +293,6 @@ export const personsRelations = relations(persons, ({ one, many }) => ({
     references: [companies.id],
   }),
   customers: many(customers),
-}));
-
-export const customerContactsRelations = relations(customerContacts, ({ one }) => ({
-  customer: one(customers, {
-    fields: [customerContacts.customerId],
-    references: [customers.id],
-  }),
-}));
-
-export const companyContactsRelations = relations(companyContacts, ({ one }) => ({
-  company: one(companies, {
-    fields: [companyContacts.companyId],
-    references: [companies.id],
-  }),
-}));
-
-export const projectRolesRelations = relations(projectRoles, ({ one }) => ({
-  project: one(projects, {
-    fields: [projectRoles.projectId],
-    references: [projects.id],
-  }),
-  user: one(users, {
-    fields: [projectRoles.userId],
-    references: [users.id],
-  }),
-  assignedByUser: one(users, {
-    fields: [projectRoles.assignedBy],
-    references: [users.id],
-  }),
 }));
 
 // Insert schemas
@@ -462,21 +361,6 @@ export const insertAILogSchema = createInsertSchema(aiLog).omit({
   createdAt: true,
 });
 
-export const insertCustomerContactSchema = createInsertSchema(customerContacts).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertCompanyContactSchema = createInsertSchema(companyContacts).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertProjectRoleSchema = createInsertSchema(projectRoles).omit({
-  id: true,
-  assignedAt: true,
-});
-
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -511,12 +395,3 @@ export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
 
 export type AILog = typeof aiLog.$inferSelect;
 export type InsertAILog = z.infer<typeof insertAILogSchema>;
-
-export type CustomerContact = typeof customerContacts.$inferSelect;
-export type InsertCustomerContact = z.infer<typeof insertCustomerContactSchema>;
-
-export type CompanyContact = typeof companyContacts.$inferSelect;
-export type InsertCompanyContact = z.infer<typeof insertCompanyContactSchema>;
-
-export type ProjectRole = typeof projectRoles.$inferSelect;
-export type InsertProjectRole = z.infer<typeof insertProjectRoleSchema>;

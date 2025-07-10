@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(222, 84%, 4.9%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(222, 84%, 4.9%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(222, 84%, 4.9%);
+  --primary: hsl(142, 71%, 45%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(210, 40%, 96%);
+  --secondary-foreground: hsl(222, 47%, 11%);
+  --muted: hsl(210, 40%, 96%);
+  --muted-foreground: hsl(215, 16%, 47%);
+  --accent: hsl(210, 40%, 96%);
+  --accent-foreground: hsl(222, 47%, 11%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --border: hsl(214, 32%, 91%);
+  --input: hsl(214, 32%, 91%);
+  --ring: hsl(142, 71%, 45%);
+  --radius: 0.5rem;
+  --chart-1: hsl(142, 71%, 45%);
+  --chart-2: hsl(24, 90%, 56%);
+  --chart-3: hsl(217, 91%, 60%);
+  --chart-4: hsl(142, 71%, 45%);
+  --chart-5: hsl(343, 81%, 75%);
+  
+  /* Bau-Structura Theme Colors */
+  --bau-green-primary: hsl(142, 71%, 45%);
+  --bau-green-secondary: hsl(142, 76%, 36%);
+  --bau-orange: hsl(24, 90%, 56%);
+  --bau-blue: hsl(217, 91%, 60%);
+  --bau-gray-50: hsl(210, 40%, 98%);
+  --bau-gray-100: hsl(210, 40%, 96%);
+  --bau-gray-600: hsl(215, 16%, 47%);
+  --bau-gray-900: hsl(222, 84%, 4.9%);
+}
+
+/* Text truncation utility for project cards */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.dark {
+  --background: hsl(222, 84%, 4.9%);
+  --foreground: hsl(210, 40%, 98%);
+  --card: hsl(222, 84%, 4.9%);
+  --card-foreground: hsl(210, 40%, 98%);
+  --popover: hsl(222, 84%, 4.9%);
+  --popover-foreground: hsl(210, 40%, 98%);
+  --primary: hsl(142, 71%, 45%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(217, 32%, 17%);
+  --secondary-foreground: hsl(210, 40%, 98%);
+  --muted: hsl(217, 32%, 17%);
+  --muted-foreground: hsl(215, 20%, 65%);
+  --accent: hsl(217, 32%, 17%);
+  --accent-foreground: hsl(210, 40%, 98%);
+  --destructive: hsl(0, 62%, 30%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --border: hsl(217, 32%, 17%);
+  --input: hsl(217, 32%, 17%);
+  --ring: hsl(142, 71%, 45%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .bau-green {
+    @apply bg-green-500 text-white;
+  }
+  
+  .bau-green-hover {
+    @apply hover:bg-green-600;
+  }
+  
+  .bau-orange {
+    @apply bg-orange-500 text-white;
+  }
+  
+  .bau-blue {
+    @apply bg-blue-500 text-white;
+  }
+  
+  .mobile-nav-item {
+    @apply flex flex-col items-center py-2 px-3 text-xs text-gray-500 transition-colors;
+  }
+  
+  .mobile-nav-item.active {
+    @apply text-green-500;
+  }
+  
+  .project-card {
+    @apply bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-1;
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Mobile Responsivität Optimierungen */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Verbesserte mobile Touch-Targets */
+  .mobile-touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  /* Optimierte Textskalierung für mobile Geräte */
+  @media (max-width: 640px) {
+    .mobile-text-optimize {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+  }
+  
+  /* Bessere Darstellung für kleine Bildschirme */
+  .mobile-grid-responsive {
+    @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+  }
+  
+  .mobile-spacing {
+    @apply p-3 sm:p-4 lg:p-6;
+  }
+  
+  .mobile-gap {
+    @apply gap-3 sm:gap-4 lg:gap-6;
+  }
+}
