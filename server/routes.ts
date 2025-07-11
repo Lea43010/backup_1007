@@ -2640,6 +2640,17 @@ Diese E-Mail wurde automatisch generiert vom Bau-Structura Hochwasserschutz-Syst
 
   console.log('🔒 Smart security middleware is active - public routes excluded, all others protected');
 
+  // --- Zentrale Fehlerbehandlungs-Middleware ---
+  app.use((err: any, req: any, res: any, next: any) => {
+    console.error('UNHANDLED ERROR:', err);
+    const status = err.status || 500;
+    res.status(status).json({
+      success: false,
+      message: err.message || 'Internal server error',
+      error: process.env.NODE_ENV === 'production' ? undefined : (err.stack || err)
+    });
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
